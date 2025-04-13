@@ -14,15 +14,34 @@ const authFailed = () => Promise.reject({
   message: 'Failed to authenticate',
 })
 
-const authenticate = async ({ email, password }) => {
+const authenticate = async ({ email, password, twoFactorToken }) => {
   const user = await users.findByEmail(email)
+
   if (!user) {
     return authFailed()
   }
+
   const isMatch = await crypto.compare(password, user.password)
+
   if (!isMatch) {
     return authFailed()
   }
+
+  if (user.twoFaEnabled && !twoFactorToken) {
+    throw new Error('twoFactorToken is required.')
+  }
+
+  if (user.twoFaEnabled) {
+    const isTowFactorValid = otplib.authenticator.verify({
+      token: twoFactorToken,
+      secret: user.twoFaSecret,
+    })
+
+    if (!isTowFactorValid) {
+      await authFailed()
+    }
+  }
+
   const { token: refreshToken, expiresAt: refreshTokenExpiration } = await tokenService.createRefreshToken(user.id)
   return {
     refreshToken,
