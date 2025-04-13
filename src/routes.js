@@ -18,6 +18,7 @@ router.post('/users', authenticated, users.createUser)
 router.post('/auth', auth.authenticate)
 router.post('/auth/refreshToken', auth.refreshToken)
 router.post('/auth/logout', auth.logout)
-router.post('/generateQrCode', authenticated, auth.generateQrCode)
+router.post('/generate-qr-code', authenticated, auth.generateQrCode)
+router.post('/activate-two-factor', authenticated, auth.activateTwoFactor)
 
 module.exports = router

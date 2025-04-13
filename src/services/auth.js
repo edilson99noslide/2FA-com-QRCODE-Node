@@ -1,6 +1,8 @@
 const users = require('./user')
 const crypto = require('./crypto')
 const tokenService = require('./token')
+const otplib = require('otplib')
+const qrcode = require('qrcode')
 
 // illustration purposes only
 // for production-ready code, use error codes/types and a catalog (maps codes -> responses)
@@ -56,8 +58,38 @@ const logout = async ({ token, allDevices }) => {
   return tokenService.invalidateRefreshToken(token)
 }
 
+const generateQrCode = async userId => {
+  // cria a secret
+  const secret = otplib.authenticator.generateSecret()
+  console.log('secret = ', secret)
+
+  await users.addTwoFASecret(userId, secret)
+
+  // Configurando o auth
+  const otpAuth = otplib.authenticator.keyuri(userId, 'QR Code Rocketseat', secret)
+
+  console.log('otpAuth =', otpAuth)
+
+  // retornando o QRCode
+  return qrcode.toDataURL(otpAuth)
+}
+
+const activateTwoFactor = async (userId, token) => {
+  const { twoFaSecret: secret } = await users.findById(userId)
+
+  console.log(secret)
+
+  if (otplib.authenticator.verify({ token, secret })) {
+    await users.activateTwoFactor(userId)
+  } else {
+    throw new Error('Incorrect Token.')
+  }
+}
+
 module.exports = {
   authenticate,
   refreshToken,
   logout,
+  generateQrCode,
+  activateTwoFactor,
 }

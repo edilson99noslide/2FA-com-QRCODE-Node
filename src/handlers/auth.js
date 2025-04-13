@@ -25,7 +25,16 @@ const logout = async ctx => {
 }
 
 const generateQrCode = async ctx => {
+  const qrcode = await auth.generateQrCode(ctx.state.userId)
 
+  ctx.body = `<img src="${qrcode}">`
+}
+
+const activateTwoFactor = async ctx => {
+  const { token } = ctx.request.body
+
+  return auth.activateTwoFactor(ctx.state.userId, token)
+    .then(ctx.body = { activated: true })
 }
 
 module.exports = {
@@ -33,4 +42,5 @@ module.exports = {
   refreshToken,
   logout,
   generateQrCode,
+  activateTwoFactor,
 }
